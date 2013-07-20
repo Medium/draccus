@@ -1,0 +1,13 @@
+aws.config
+
+*~
+.DS_Store
+.project
+.idea/
+.settings/
+node_modules/
+out/
+npm-debug.log
+*.orig
+*.sublime-*
+*.swp
