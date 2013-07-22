@@ -34,12 +34,12 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
       entries.push({'Id': String(count), 'MessageBody': 'Random message numero ' + (count)})
     }
 
-    console.log('Creating messages', count - 10, 'through', count)
     sqs.sendMessageBatch({'QueueUrl': queueUrl, 'Entries': entries}, function (err, data) {
       if (err) {
         console.error(err.stack)
         process.exit(1)
       }
+      console.log(count + ' messages created')
       if (--batches > 0) sendBatch()
       else console.log('All done')
     })
