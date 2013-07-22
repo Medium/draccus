@@ -11,39 +11,17 @@
  */
 
 var AWS = require('aws-sdk')
-var flags = require('flags')
-var fs = require('fs')
 var path = require('path')
 var MessageStore = require('../lib/MessageStore')
 var S3Store = require('../lib/S3Store')
 var StdoutStore = require('../lib/StdoutStore')
 var SqsSink = require('../lib/SqsSink')
 
-flags.defineString('aws_config', '', 'JSON file containing AWS SQS configuration options.')
-
-flags.defineString('access_key_id', '', 'Your AWS access key ID.')
-flags.defineString('secret_access_key', '', 'Your AWS secret access key.')
-flags.defineString('region', '', 'The AWS Region where the queue resides, overrides config file.')
-flags.defineString('queue_name', '', 'The name of the SQS queue to receive messages from.')
-
-flags.defineString('s3_bucket', '', 'The S3 bucket where messages should be written')
-flags.defineString('out_dir', '', 'Local directory where files will be written')
-flags.defineBoolean('stdout', false, 'Write messages to the console')
-
-flags.defineString('filename_pattern', '', 'How to generate filenames. Uses momentjs date ' +
-    'formatting options.  Default: X')
-
-flags.defineNumber('flush_frequency', 0, 'How often the store should flush messages, in seconds')
-flags.defineBoolean('daemon', false, 'Whether the process should stay running once the queue ' +
-    'is empty, and wait for further messages.')
-
-flags.parse()
-
-var options = createOptions()
+var options = require('../lib/options')
 
 
 // Load SQS and get the queue name.
-var sqs = new AWS.SQS(getAwsOptions(options))
+var sqs = new AWS.SQS(options.getAwsOptions())
 sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
   if (err) exit(1, 'Unable to resolve queue "' + options.queueName + '": ' + err.message)
 
@@ -53,11 +31,11 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
     // Create a sink for receiving messages from SQS.
     var sink = new SqsSink(sqs)
       .setQueueUrl(data['QueueUrl'])
-      .setStopWhenEmpty(!flags.get('daemon'))
+      .setStopWhenEmpty(!options.daemon)
       .setVisibilityTimeSec(options.flushFrequency * 1.25) // Extra 25% leeway to ack messages.
 
     if (options.s3Bucket) {
-      var s3 = new AWS.S3(getAwsOptions(options))
+      var s3 = new AWS.S3(options.getAwsOptions())
       new S3Store(sink, s3, options.filenamePattern, options.s3Bucket, options.flushFrequency)
           .verifyBucket(function (err, writable) {
             if (!writable) exit(1, 'S3 Bucket "' + options.s3Bucket + '"" not writable, ' + err.statusCode + ' ' + err.name)
@@ -69,7 +47,7 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
       new MessageStore(sink, outDir, options.filenamePattern, options.flushFrequency)
       sink.startReceiving()
 
-    } else if (flags.get('stdout')) {
+    } else if (options.stdout) {
       new StdoutStore(sink)
       sink.startReceiving()
 
@@ -79,67 +57,6 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
   })
 })
 
-
-/**
- * Creates an options object to pass to the AWS-SDK, if specified a config file will be used.
- * Flags will override values in the config.
- * @return {Object}
- */
-function createOptions() {
-  // TODO(dan): This configuration code is pretty ugly.  Figure out a better way of allowing
-  // a combination of static configuration and flags.
-
-  var options
-
-  if (flags.get('aws_config')) {
-    var optionsFile = path.join(process.cwd(), flags.get('aws_config'))
-    try {
-      options = JSON.parse(fs.readFileSync(optionsFile, 'utf8'))
-    } catch (e) {
-      exit(1, 'Unable to load SQS options from "' + optionsFile + '": ' + e.message)
-    }
-  } else {
-    options = {}
-  }
-
-  // Allow CLI overrides of AWS config options.
-  if (flags.get('region')) options.region = flags.get('region')
-  if (flags.get('access_key_id')) options.accessKeyId = flags.get('access_key_id')
-  if (flags.get('secret_access_key')) options.secretAccessKey = flags.get('secret_access_key')
-
-  // Non AWS config options, but included for convenience, will be removed
-  // before being passed to the AWS SDK.
-  if (flags.get('queue_name')) options.queueName = flags.get('queue_name')
-  if (flags.get('s3_bucket')) options.s3Bucket = flags.get('s3_bucket')
-  if (flags.get('out_dir')) options.outDir = flags.get('out_dir')
-
-  options.flushFrequency = flags.get('flush_frequency') || options.flushFrequency || 60
-  options.filenamePattern = flags.get('filename_pattern') || options.filenamePattern || 'X'
-
-  // Force API version.
-  options.apiVersion = '2012-11-05'
-
-  return options
-}
-
-
-function getAwsOptions(options) {
-  var o = shallowClone(options)
-  delete o.queueName
-  delete o.s3Bucket
-  delete o.outDir
-  delete o.flushFrequency
-  return o
-}
-
-
-function shallowClone(obj) {
-  var o = {}
-  for (var k in obj) {
-    o[k] = obj[k]
-  }
-  return o
-}
 
 /**
  * Exits the process with a status code, logging an error message.
