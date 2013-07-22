@@ -5,6 +5,7 @@
  */
 
 var MessageStore = require('../lib/MessageStore')
+var EventEmitter = require('events').EventEmitter
 
 
 var pendingTimeout
@@ -42,12 +43,12 @@ exports.setUp = function (done) {
   fsCallback = null
   acknowledgedMessages = []
 
-  messageStore = new MessageStore('out-dir')
-  messageStore.sink = {
-    acknowledge: function (keys) {
-      acknowledgedMessages = acknowledgedMessages.concat(keys)
-    }
+  var fakeSink = new EventEmitter()
+  fakeSink.acknowledge = function (keys) {
+    acknowledgedMessages = acknowledgedMessages.concat(keys)
   }
+
+  messageStore = new MessageStore(fakeSink, 'out-dir', 'X')
 
   done()
 }

@@ -49,34 +49,33 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
 
   // The SDK swallows errors in the callback. So complete the set up on next tick.
   process.nextTick(function () {
-    var store
+
+    // Create a sink for receiving messages from SQS.
+    var sink = new SqsSink(sqs)
+      .setQueueUrl(data['QueueUrl'])
+      .setStopWhenEmpty(!flags.get('daemon'))
+      .setVisibilityTimeSec(options.flushFrequency * 1.25) // Extra 25% leeway to ack messages.
 
     if (options.s3Bucket) {
       var s3 = new AWS.S3(getAwsOptions(options))
-      store = new S3Store(s3, options.filenamePattern, options.s3Bucket, options.flushFrequency)
-      store.verifyBucket(function (err, writable) {
-        if (!writable) {
-          exit(1, 'S3 Bucket "' + options.s3Bucket + '"" not writable, ' + err.statusCode + ' ' + err.name)
-        }
-      })
+      new S3Store(sink, s3, options.filenamePattern, options.s3Bucket, options.flushFrequency)
+          .verifyBucket(function (err, writable) {
+            if (!writable) exit(1, 'S3 Bucket "' + options.s3Bucket + '"" not writable, ' + err.statusCode + ' ' + err.name)
+            else sink.receive()
+          })
 
     } else if (options.outDir) {
       var outDir = path.join(process.cwd(), options.outDir)
-      store = new MessageStore(outDir, options.filenamePattern, 1000 * options.flushFrequency)
+      new MessageStore(sink, outDir, options.filenamePattern, options.flushFrequency)
+      sink.receive()
 
     } else if (flags.get('stdout')) {
-      store = new StdoutStore()
+      new StdoutStore(sink)
+      sink.receive()
 
     } else {
       exit(1, 'You must specify one of --stdout, --out_dir, or --s3_bucket')
     }
-
-    new SqsSink(sqs)
-      .setQueueUrl(data['QueueUrl'])
-      .setStopWhenEmpty(!flags.get('daemon'))
-      .setVisibilityTimeSec(options.flushFrequency * 1.25) // Extra 25% leeway to ack messages.
-      .setStore(store)
-      .receive()
   })
 })
 

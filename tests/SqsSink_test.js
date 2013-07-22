@@ -26,25 +26,25 @@ function fireTimeout() {
 }
 
 var collectedMessages
-var receiveNext
+var receiveCount
 var mockSqs
 var sqsSink
 
 
 exports.setUp = function (done) {
   collectedMessages = {}
-  receiveNext = null
-
+  pendingTimeout = null
+  receiveCount = 0
   mockSqs = {}
 
   sqsSink = new SqsSink(mockSqs)
   sqsSink.setQueueUrl('/queue/for/testing')
-  sqsSink.setStore({handleMessages: function (messages, callback) {
+  sqsSink.on('receive', function (messages) {
+    receiveCount++
     for (var key in messages) {
       collectedMessages[key] = messages[key]
     }
-    receiveNext = callback
-  }})
+  })
 
   done()
 }
@@ -77,14 +77,13 @@ exports.testReceive = function (test) {
     ]
   })
 
-  // Two messages should have been collected by the handler.
+  test.equal(1, receiveCount, 'One set of messages should have been received ')
   test.equal(Object.keys(collectedMessages).length, 2)
 
   test.equal(1, requestCount, 'Next batch should not be dispatched until handler calls back')
 
-  // Fire the callback passed to the message handler.
-  receiveNext()
-  receiveNext = null
+  // Fire the timeout that causes the sink to request more.
+  fireTimeout()
 
   test.equal(2, requestCount)
 
@@ -95,33 +94,33 @@ exports.testReceive = function (test) {
     ]
   })
 
+  test.equal(2, receiveCount, 'One set of messages should have been received ')
   test.equal(Object.keys(collectedMessages).join(''), 'ABCD')
   test.equal(collectedMessages['A'], '123')
   test.equal(collectedMessages['B'], '456')
   test.equal(collectedMessages['C'], '789')
   test.equal(collectedMessages['D'], '0AB')
 
-  receiveNext()
-  receiveNext = null
+  fireTimeout()
 
   test.equal(3, requestCount)
-  test.equal(sqsSink._emptyPollDelaySec, 0)
+  test.equal(sqsSink._emptyPollDelaySec, 2)
 
   callback(null, {'Messages': []})
-  test.equal(sqsSink._emptyPollDelaySec, 2, 'Poll delay should be incremented after empty response')
+  test.equal(sqsSink._emptyPollDelaySec, 4, 'Poll delay should be incremented after empty response')
 
   test.equal(3, requestCount, 'Another request should not be made after empty response')
-  test.equal(receiveNext, null, 'Message handler should not have been called for empty response')
+  test.equal(2, receiveCount, 'No messages should have been received')
 
   fireTimeout()
   test.equal(4, requestCount, 'Request should have been made after timeout fires')
 
   callback(null, {'Messages': []})
-  test.equal(sqsSink._emptyPollDelaySec, 4, 'Poll delay should be incremented after empty response')
+  test.equal(sqsSink._emptyPollDelaySec, 6, 'Poll delay should be incremented after empty response')
   fireTimeout()
 
   callback(null, {'Messages': [{ReceiptHandle: 'E', Body: 'CDE'}]})
-  test.equal(sqsSink._emptyPollDelaySec, 0, 'Poll delay should be reset after success')
+  test.equal(sqsSink._emptyPollDelaySec, 2, 'Poll delay should be reset after success')
 
   test.ok(sqsSink.isReceiving())
 
