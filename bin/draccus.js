@@ -61,17 +61,17 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
       new S3Store(sink, s3, options.filenamePattern, options.s3Bucket, options.flushFrequency)
           .verifyBucket(function (err, writable) {
             if (!writable) exit(1, 'S3 Bucket "' + options.s3Bucket + '"" not writable, ' + err.statusCode + ' ' + err.name)
-            else sink.receive()
+            else sink.startReceiving()
           })
 
     } else if (options.outDir) {
       var outDir = path.join(process.cwd(), options.outDir)
       new MessageStore(sink, outDir, options.filenamePattern, options.flushFrequency)
-      sink.receive()
+      sink.startReceiving()
 
     } else if (flags.get('stdout')) {
       new StdoutStore(sink)
-      sink.receive()
+      sink.startReceiving()
 
     } else {
       exit(1, 'You must specify one of --stdout, --out_dir, or --s3_bucket')

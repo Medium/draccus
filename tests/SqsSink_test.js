@@ -59,7 +59,7 @@ exports.testReceive = function (test) {
     requestCount++
   }
 
-  sqsSink.receive()
+  sqsSink.startReceiving()
 
   test.equal(1, requestCount)
 
@@ -138,7 +138,7 @@ exports.testReceiveUntilEmpty = function (test) {
   }
 
   sqsSink.setStopWhenEmpty(true)
-  sqsSink.receive()
+  sqsSink.startReceiving()
   receiveCallback(null, {'Messages': []})
   receiveCallback = null
 
@@ -188,7 +188,7 @@ exports.testReceiveError = function (test) {
     c(new Error('Not a real error, OK to ignore'))
   }
 
-  sqsSink.receive()
+  sqsSink.startReceiving()
 
   test.equal(requestCount, 1)
   test.notEqual(pendingTimeout, null, 'Timeout should have been set after error')
