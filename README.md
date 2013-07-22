@@ -32,12 +32,14 @@ Usage
 - `--access_key_id` : Your AWS access key ID, if not specified in aws_config
 - `--secret_access_key` : Your AWS access key ID, if not specified in aws_config
 - `--queue_name` : The name of the queue to read messages from.
-- `--flush_frequency` : How often to flush messages to the store, defaults to 60s.
+- `--flush_frequency` : How often to flush messages to the store. Default: 60s.
 - `--s3_bucket` : Name of an S3 bucket where messages should be written
 - `--out_dir` : A local directory to write messages to (e.g. for dev)
 - `--stdout` : Simply logs messages to the console
 - `--daemon` : Whether the process should stay running once the queue is empty,
   and wait for further messages.
+- `filename_pattern` : How to generate filenames, uses [momentjs](http://momentjs.com/docs/#/displaying/)
+  for string formatting.  Default: "X" for unix timestamp.
 
 
 ### --aws_config

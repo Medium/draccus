@@ -30,7 +30,10 @@ flags.defineString('s3_bucket', '', 'The S3 bucket where messages should be writ
 flags.defineString('out_dir', '', 'Local directory where files will be written')
 flags.defineBoolean('stdout', false, 'Write messages to the console')
 
-flags.defineNumber('flush_frequency', 60, 'How often the store should flush messages, in seconds')
+flags.defineString('filename_pattern', '', 'How to generate filenames. Uses momentjs date ' +
+    'formatting options.  Default: X')
+
+flags.defineNumber('flush_frequency', 0, 'How often the store should flush messages, in seconds')
 flags.defineBoolean('daemon', false, 'Whether the process should stay running once the queue ' +
     'is empty, and wait for further messages.')
 
@@ -50,7 +53,7 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
 
     if (options.s3Bucket) {
       var s3 = new AWS.S3(getAwsOptions(options))
-      store = new S3Store(s3, options.s3Bucket, options.flushFrequency)
+      store = new S3Store(s3, options.filenamePattern, options.s3Bucket, options.flushFrequency)
       store.verifyBucket(function (err, writable) {
         if (!writable) {
           exit(1, 'S3 Bucket "' + options.s3Bucket + '"" not writable, ' + err.statusCode + ' ' + err.name)
@@ -59,7 +62,7 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
 
     } else if (options.outDir) {
       var outDir = path.join(process.cwd(), options.outDir)
-      store = new MessageStore(outDir, 1000 * options.flushFrequency)
+      store = new MessageStore(outDir, options.filenamePattern, 1000 * options.flushFrequency)
 
     } else if (flags.get('stdout')) {
       store = new StdoutStore()
@@ -111,7 +114,8 @@ function createOptions() {
   if (flags.get('s3_bucket')) options.s3Bucket = flags.get('s3_bucket')
   if (flags.get('out_dir')) options.outDir = flags.get('out_dir')
 
-  options.flushFrequency = flags.get('flush_frequency')
+  options.flushFrequency = flags.get('flush_frequency') || options.flushFrequency || 60
+  options.filenamePattern = flags.get('filename_pattern') || options.filenamePattern || 'X'
 
   // Force API version.
   options.apiVersion = '2012-11-05'
