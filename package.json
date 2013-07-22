@@ -37,7 +37,8 @@
     "node": "*"
   },
   "bin" : {
-    "draccus": "./bin/draccus.js"
+    "draccus": "./bin/draccus.js",
+    "draccus-fill-queue": "./bin/fill-queue.js"
   },
   "scripts": {
     "test": "nodeunit ./tests/*"
