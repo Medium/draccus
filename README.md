@@ -39,7 +39,8 @@ Usage
 - `--daemon` : Whether the process should stay running once the queue is empty,
   and wait for further messages.
 - `--filename_pattern` : How to generate filenames, uses [momentjs](http://momentjs.com/docs/#/displaying/)
-  for string formatting.  Default: "X" for unix timestamp.
+  for string formatting, in addition replacing `PID` with the process id.
+  Default: `X` for unix timestamp.
 
 
 ### --aws_config
@@ -54,7 +55,8 @@ described in the
       "sslEnabled": true,
       "region": "us-west-2",
       "queueName": "my_awesome_queue",
-      "s3Bucket": "drained_queue"
+      "s3Bucket": "drained_queue",
+      "filenamePattern": "YYYY/MM/DD/HH-X-PID"
     }
 
 The JSON flags are camel case equivalents of the CLI flags.
@@ -77,5 +79,5 @@ Test set up:
     time draccus --aws_config aws.config --flush_frequency 10
 
 
-(If you use multiple workers remember to specify a different filename pattern for
-each worker, to avoid clobbering data.)
+(If you use multiple workers remember to specify a different filename pattern or
+include `PID` in the filename pattern.)
