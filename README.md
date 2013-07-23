@@ -63,20 +63,19 @@ The JSON flags are camel case equivalents of the CLI flags.
 Throughput
 ----------
 
-Throughput mostly seems to be bounded by network latency.  In a test it took
-40.7s to handle 10,000 messages. That is: receive, acknowledge, and write to S3.
-The test flushed to S3 every 10s, resulting in 3 100k files.
+Throughput should mostly be limited by network latency and SQS response time.
+From [SQS documentation](http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/throughput.html)
+the theoretical limit per instance should be 500 messages per second.
+
+In a test on an m1.small it took 40.7s to handle 10,000 messages. That is:
+receive, write to S3, and delete the message.  The test flushed to S3 every 10s,
+resulting in 3x 100k files.
 
 Test set up:
 
     draccus-fill-queue --aws_config aws.config --batches 1000
     time draccus --aws_config aws.config --flush_frequency 10
 
-(m1.small in us-west-2)
 
-
-Multiple Workers
-----------------
-
-If you use multiple workers remember to specify a different filename pattern for
-each worker, to avoid clobbering data.
+(If you use multiple workers remember to specify a different filename pattern for
+each worker, to avoid clobbering data.)
