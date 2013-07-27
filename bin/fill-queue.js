@@ -15,7 +15,7 @@ flags.defineNumber('batches', 10, 'How many batches of 10 messages to send to th
 var AWS = require('aws-sdk')
 var options = require('../lib/options')
 
-var sqs = new AWS.SQS(options.getAwsOptions())
+var sqs = new AWS.SQS(options)
 sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
   if (err) {
     console.error('Unable to resolve queue "' + options.queueName + '": ' + err.message)

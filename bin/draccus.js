@@ -36,7 +36,7 @@ if (options.logFile) {
 
 
 // Load SQS and get the queue name.
-var sqs = new AWS.SQS(options.getAwsOptions())
+var sqs = new AWS.SQS(options)
 sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
   if (err) exit(1, 'Unable to resolve queue "' + options.queueName + '": ' + err.message)
 
@@ -50,7 +50,7 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
       .setVisibilityTimeSec(options.flushFrequency * 1.25) // Extra 25% leeway to ack messages.
 
     if (options.s3Bucket) {
-      var s3 = new AWS.S3(options.getAwsOptions())
+      var s3 = new AWS.S3(options)
       new S3Store(sink, s3, options.filenamePattern, options.s3Bucket, options.flushFrequency)
           .verifyBucket(function (err, writable) {
             if (!writable) exit(1, 'S3 Bucket "' + options.s3Bucket + '" not writable, ' + err.statusCode + ' ' + err.name)
