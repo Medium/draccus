@@ -41,6 +41,7 @@ Usage
 - `--filename_pattern` : How to generate filenames, uses [momentjs](http://momentjs.com/docs/#/displaying/)
   for string formatting, in addition replacing `PID` with the process id.
   Default: `X` for unix timestamp.
+- `--log_file` : The path of a file to write logs too.
 
 
 ### --aws_config

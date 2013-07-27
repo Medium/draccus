@@ -10,14 +10,29 @@
  *
  */
 
-var AWS = require('aws-sdk')
+var logg = require('logg')
+var fs = require('fs')
 var path = require('path')
+var AWS = require('aws-sdk')
 var MessageStore = require('../lib/MessageStore')
 var S3Store = require('../lib/S3Store')
 var StdoutStore = require('../lib/StdoutStore')
 var SqsSink = require('../lib/SqsSink')
 
 var options = require('../lib/options')
+
+
+if (options.logFile) {
+  var fileName = path.resolve(process.cwd(), options.logFile)
+  var writeStream = fs.createWriteStream(fileName, {flags: 'a', encoding: 'utf8', mode: 0666})
+  logg.registerWatcher(function (logRecord) {
+    writeStream.write(
+        logRecord.date.toISOString() + ' [' +
+        logg.Level.toString(logRecord.level) + '] ' +
+        (logRecord.name ? '(' + logRecord.name + ') ' : '') +
+        logRecord.getFormattedMessage() + '\n')
+  })
+}
 
 
 // Load SQS and get the queue name.
@@ -38,7 +53,7 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
       var s3 = new AWS.S3(options.getAwsOptions())
       new S3Store(sink, s3, options.filenamePattern, options.s3Bucket, options.flushFrequency)
           .verifyBucket(function (err, writable) {
-            if (!writable) exit(1, 'S3 Bucket "' + options.s3Bucket + '"" not writable, ' + err.statusCode + ' ' + err.name)
+            if (!writable) exit(1, 'S3 Bucket "' + options.s3Bucket + '" not writable, ' + err.statusCode + ' ' + err.name)
             else sink.startReceiving()
           })
 
@@ -64,6 +79,6 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
  * @param {string} message
  */
 function exit(code, message) {
-  console.error(message)
+  logg.getLogger('').error(message)
   process.exit(code)
 }
