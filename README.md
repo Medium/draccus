@@ -1,6 +1,9 @@
 Draccus
 =======
 
+[![Build Status](https://secure.travis-ci.org/Obvious/draccus.png)](http://travis-ci.org/Obvious/draccus)
+
+
 A tool for stashing messages queued up in Amazon's SQS.
 
 Use it as a disaster recovery mechanism to drain a queue, or use it to guarantee
