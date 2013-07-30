@@ -38,6 +38,7 @@
   },
   "bin" : {
     "draccus": "./bin/draccus.js",
+    "draccus-replay": "./bin/replay-messages.js",
     "draccus-fill-queue": "./bin/fill-queue.js"
   },
   "scripts": {
