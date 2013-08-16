@@ -45,6 +45,7 @@ Usage
   for string formatting, in addition replacing `PID` with the process id.
   Default: `X` for unix timestamp.
 - `--log_file` : The path of a file to write logs too.
+- `--log_raw_message` : Specifies that the raw SQS message should be stored as JSON, instead of the message body.
 
 
 ### --aws_config

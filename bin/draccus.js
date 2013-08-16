@@ -44,7 +44,7 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
   process.nextTick(function () {
 
     // Create a sink for receiving messages from SQS.
-    var sink = new SqsSink(sqs)
+    var sink = new SqsSink(sqs, options.logRawMessage)
       .setQueueUrl(data['QueueUrl'])
       .setStopWhenEmpty(!options.daemon)
       .setVisibilityTimeSec(options.flushFrequency * 1.25) // Extra 25% leeway to ack messages.
@@ -58,7 +58,7 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
           })
 
     } else if (options.outDir) {
-      var outDir = path.join(process.cwd(), options.outDir)
+      var outDir = path.resolve(process.cwd(), options.outDir)
       new MessageStore(sink, outDir, options.filenamePattern, options.flushFrequency)
       sink.startReceiving()
 
