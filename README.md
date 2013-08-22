@@ -86,3 +86,32 @@ Test set up:
 
 (If you use multiple workers remember to specify a different filename pattern or
 include `PID` in the filename pattern.)
+
+
+Contributing
+------------
+
+Questions, comments, bug reports, and pull requests are all welcome.  Submit them at
+[the project on GitHub](https://github.com/Obvious/draccus/).  If you haven't contributed to an
+[Obvious](http://github.com/Obvious/) project before please head over to the
+[Open Source Project](https://github.com/Obvious/open-source#note-to-external-contributors) and fill
+out an OCLA (it should be pretty painless).
+
+Bug reports that include steps-to-reproduce (including code) are the
+best. Even better, make them in the form of pull requests.
+
+Author
+------
+
+[Dan Pupius](https://github.com/dpup)
+([personal website](http://pupius.co.uk/)), supported by
+[The Obvious Corporation](http://obvious.com/).
+
+License
+-------
+
+Copyright 2013 [The Obvious Corporation](http://obvious.com/).
+
+Licensed under the Apache License, Version 2.0.
+See the top-level file `LICENSE.txt` and
+(http://www.apache.org/licenses/LICENSE-2.0).
