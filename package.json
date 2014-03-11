@@ -1,6 +1,6 @@
 {
   "name": "draccus",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "keywords": [
     "javascript",
     "sqs",
@@ -45,11 +45,11 @@
     "test": "nodeunit ./tests/*"
   },
   "dependencies": {
-    "aws-sdk": "1.4.0",
+    "aws-sdk": "1.18.0",
     "flags": "0.1.1",
-    "logg": "0.2.1",
-    "moment": "2.1.0",
-    "nodeunit": "0.8.0"
+    "logg": "0.3.0",
+    "moment": "2.5.1",
+    "nodeunit": "0.8.6"
   },
   "main": "lib/draccus.js"
 }

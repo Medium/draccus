@@ -27,28 +27,29 @@ $ npm test draccus
 Usage
 -----
 
-    dracus.js --aws_config path/to/config --queue_name some_queue_name
+    dracus.js --options_file path/to/config --queue_name some_queue_name
 
 ### CLI Flags
 
-- `--aws_config` : Path to a JSON file where configuration can be loaded from.
-- `--access_key_id` : Your AWS access key ID, if not specified in aws_config
-- `--secret_access_key` : Your AWS access key ID, if not specified in aws_config
+- `--options_file` : Path to a JSON file where options can be loaded from.
+- `--access_key_id` : AWS access key ID.
+- `--secret_access_key` : AWS secret access key.
+- `--metadata_service_host` : Hostname to use when looking up credentials via IAM (see below).
 - `--queue_name` : The name of the queue to read messages from.
 - `--flush_frequency` : How often to flush messages to the store. Default: 60s.
-- `--s3_bucket` : Name of an S3 bucket where messages should be written
-- `--out_dir` : A local directory to write messages to (e.g. for dev)
-- `--stdout` : Simply logs messages to the console
+- `--s3_bucket` : Name of an S3 bucket where messages should be written.
+- `--out_dir` : A local directory to write messages to (e.g. for dev).
+- `--stdout` : Simply logs messages to the console (warning: will still erase the queue contents).
 - `--daemon` : Whether the process should stay running once the queue is empty,
   and wait for further messages.
-- `--filename_pattern` : How to generate filenames, uses [momentjs](http://momentjs.com/docs/#/displaying/)
+- `--filename_pattern` : How to generate filenames, uses [momentjs](http://momentjs.com/docs/#/displaying/).
   for string formatting, in addition replacing `PID` with the process id.
   Default: `X` for unix timestamp.
 - `--log_file` : The path of a file to write logs too.
 - `--log_raw_message` : Specifies that the raw SQS message should be stored as JSON, instead of the message body.
 
 
-### --aws_config
+### --options_file
 
 The above flags can be specified via a JSON file, along with additional AWS configuration options as
 described in the
@@ -67,6 +68,16 @@ described in the
 The JSON flags are camel case equivalents of the CLI flags.
 
 
+AWS Credentials
+---------------
+
+When running outside of EC2 you will need to pass in a valid access key and secret key.  However, if
+you are running within EC2 and you omit the access key draccus will fall back to trying to use IAM
+based credentials, using the instance's role.
+See [here](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html)
+for more details.
+
+
 Throughput
 ----------
 
@@ -80,8 +91,8 @@ resulting in 3x 100k files.
 
 Test set up:
 
-    draccus-fill-queue --aws_config aws.config --batches 1000
-    time draccus --aws_config aws.config --flush_frequency 10
+    draccus-fill-queue --options_file aws.config --batches 1000
+    time draccus --options_file aws.config --flush_frequency 10
 
 
 (If you use multiple workers remember to specify a different filename pattern or

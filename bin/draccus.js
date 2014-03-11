@@ -6,7 +6,7 @@
  * @fileoverview External interface to draccus program.
  *
  * Usage:
- *  ./draccus.js --daemon --aws_config config.json
+ *  ./draccus.js --daemon --options_file config.json
  *
  */
 
