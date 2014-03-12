@@ -1,6 +1,6 @@
 {
   "name": "draccus",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "keywords": [
     "javascript",
     "sqs",
@@ -36,7 +36,7 @@
   "engine": {
     "node": "*"
   },
-  "bin" : {
+  "bin": {
     "draccus": "./bin/draccus.js",
     "draccus-replay": "./bin/replay-messages.js",
     "draccus-fill-queue": "./bin/fill-queue.js"
