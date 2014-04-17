@@ -1,7 +1,7 @@
 Draccus
 =======
 
-[![Build Status](https://secure.travis-ci.org/Obvious/draccus.png)](http://travis-ci.org/Obvious/draccus)
+[![Build Status](https://secure.travis-ci.org/Medium/draccus.png)](http://travis-ci.org/Medium/draccus)
 
 
 A tool for stashing messages queued up in Amazon's SQS.
@@ -103,9 +103,9 @@ Contributing
 ------------
 
 Questions, comments, bug reports, and pull requests are all welcome.  Submit them at
-[the project on GitHub](https://github.com/Obvious/draccus/).  If you haven't contributed to an
-[Obvious](http://github.com/Obvious/) project before please head over to the
-[Open Source Project](https://github.com/Obvious/open-source#note-to-external-contributors) and fill
+[the project on GitHub](https://github.com/Medium/draccus/).  If you haven't contributed to a
+[Medium](http://github.com/Medium/) project before please head over to the
+[Open Source Project](https://github.com/Medium/open-source#note-to-external-contributors) and fill
 out an OCLA (it should be pretty painless).
 
 Bug reports that include steps-to-reproduce (including code) are the
@@ -116,7 +116,7 @@ Author
 
 [Dan Pupius](https://github.com/dpup)
 ([personal website](http://pupius.co.uk/)), supported by
-[The Obvious Corporation](http://obvious.com/).
+[A Medium Corporation](http://medium.com/).
 
 License
 -------
