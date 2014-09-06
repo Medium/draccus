@@ -10,19 +10,23 @@ var SqsSink = require('../lib/SqsSink')
 // Don't exit on errors since the mock SQS doesn't swallow errors.
 SqsSink.exitOnErrors = false
 
+var pendingTimeouts
+var allowMultipleReceivers
 
-var pendingTimeout
 SqsSink.setTimeout = function (fn, ms) {
-  if (pendingTimeout) throw new Error('Timeout already scheduled')
-  pendingTimeout = fn
+  if (pendingTimeouts.length > 0 && !allowMultipleReceivers) {
+    throw new Error('Timeout already scheduled')
+  }
+  pendingTimeouts.push(fn)
 }
 
-
 function fireTimeout() {
-  if (!pendingTimeout) throw new Error('No timeout scheduled')
-  var timeout = pendingTimeout
-  pendingTimeout = null
-  timeout()
+  if (pendingTimeouts.length === 0) throw new Error('No timeout scheduled')
+  pendingTimeouts.shift()()
+}
+
+function hasPendingTimeouts() {
+  return pendingTimeouts.length > 0
 }
 
 var collectedMessages
@@ -30,12 +34,13 @@ var receiveCount
 var mockSqs
 var sqsSink
 
-
 exports.setUp = function (done) {
   collectedMessages = {}
   pendingTimeout = null
   receiveCount = 0
   mockSqs = {}
+  pendingTimeouts = []
+  allowMultipleReceivers = false
 
   sqsSink = new SqsSink(mockSqs)
   sqsSink.setQueueUrl('/queue/for/testing')
@@ -127,6 +132,100 @@ exports.testReceive = function (test) {
   test.done()
 }
 
+exports.testMutipleRunningReceivers = function (test) {
+  allowMultipleReceivers = true
+
+  var params, callback = [], requestCount = 0
+  mockSqs.receiveMessage = function (p, c) {
+    callback.push(c)
+    requestCount++
+  }
+
+  sqsSink.setMaxConcurrentReceivers(2)
+  sqsSink.startReceiving()
+
+  test.equal(2, requestCount)
+
+  // Fire the callback.
+  callback[0](null, {
+    'Messages': [
+      {ReceiptHandle: 'A', Body: '123'},
+      {ReceiptHandle: 'B', Body: '456'}
+    ]
+  })
+  callback[1](null, {
+    'Messages': [
+      {ReceiptHandle: 'C', Body: '789'},
+      {ReceiptHandle: 'D', Body: '0AB'}
+    ]
+  })
+
+  test.equal(2, receiveCount, 'Two sets of messages should have been received ')
+  test.equal(Object.keys(collectedMessages).join(''), 'ABCD')
+  test.equal(collectedMessages['A'], '123')
+  test.equal(collectedMessages['B'], '456')
+  test.equal(collectedMessages['C'], '789')
+  test.equal(collectedMessages['D'], '0AB')
+
+  test.equal(2, requestCount, 'Next batch should not be dispatched until handler calls back')
+
+  // The rest of the tested behaviors should be very similar to the scenario where
+  // there is only one maximum waiting receiver. Even if we allow multiple
+  // concurrent receivers, they don't know about each other.
+
+  // Fire the timeout (twice!) that causes the sink to request more.
+  // We can fire twice because there are two pending timeout at this moment.
+  fireTimeout()
+  fireTimeout()
+
+  test.equal(4, requestCount)
+
+  callback[2](null, {
+    'Messages': [
+      {ReceiptHandle: 'E', Body: 'CDE'}
+    ]
+  })
+
+  test.equal(3, receiveCount, 'Three sets of messages should have been received ')
+  test.equal(Object.keys(collectedMessages).join(''), 'ABCDE')
+  test.equal(collectedMessages['E'], 'CDE')
+
+  callback[3](null, {
+    'Messages': [
+      {ReceiptHandle: 'F', Body: 'FGH'}
+    ]
+  })
+
+  test.equal(4, receiveCount, 'Four sets of messages should have been received ')
+  test.equal(Object.keys(collectedMessages).join(''), 'ABCDEF')
+  test.equal(collectedMessages['F'], 'FGH')
+
+  fireTimeout()
+
+  test.equal(5, requestCount)
+  test.equal(sqsSink._emptyPollDelaySec, 2)
+
+  callback[4](null, {'Messages': []})
+  test.equal(sqsSink._emptyPollDelaySec, 4, 'Poll delay should be incremented after empty response')
+
+  test.equal(5, requestCount, 'Another request should not be made after empty response')
+  test.equal(4, receiveCount, 'No messages should have been received')
+
+  fireTimeout()
+  test.equal(6, requestCount, 'Request should have been made after timeout fires')
+
+  callback[5](null, {'Messages': []})
+  test.equal(sqsSink._emptyPollDelaySec, 6, 'Poll delay should be incremented after empty response')
+  fireTimeout()
+
+  callback[6](null, {'Messages': [{ReceiptHandle: 'G', Body: 'IJK'}]})
+  test.equal(sqsSink._emptyPollDelaySec, 2, 'Poll delay should be reset after success')
+  test.equal(Object.keys(collectedMessages).join(''), 'ABCDEFG')
+
+  test.ok(sqsSink.isReceiving())
+
+  test.done()
+}
 
 exports.testReceiveUntilEmpty = function (test) {
   var receiveCallback, getQueueParams, getQueueCallback
@@ -173,7 +272,7 @@ exports.testReceiveUntilEmpty = function (test) {
   receiveCallback(null, {'Messages': []})
   getQueueCallback(null, {'Attributes': {}})
 
-  test.equal(pendingTimeout, null, 'No timeout should be scheduled')
+  test.ok(!hasPendingTimeouts(), 'No timeout should be scheduled')
 
   test.ok(!sqsSink.isReceiving(), 'Sink should have stopped')
 
@@ -191,12 +290,12 @@ exports.testReceiveError = function (test) {
   sqsSink.startReceiving()
 
   test.equal(requestCount, 1)
-  test.notEqual(pendingTimeout, null, 'Timeout should have been set after error')
+  test.ok(hasPendingTimeouts(), 'Timeout should have been set after error')
 
   fireTimeout()
 
   test.equal(requestCount, 2)
-  test.notEqual(pendingTimeout, null, 'Timeout should have been set after error')
+  test.ok(hasPendingTimeouts(), 'Timeout should have been set after error')
 
   test.done()
 }

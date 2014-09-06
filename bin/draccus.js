@@ -48,6 +48,11 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
       .setQueueUrl(data['QueueUrl'])
       .setStopWhenEmpty(!options.daemon)
       .setVisibilityTimeSec(options.flushFrequency * 1.25) // Extra 25% leeway to ack messages.
+    
+    // do not allow falsy values (espcially not 0)
+    if (options.maxConcurrentReceivers) {
+      sink.setMaxConcurrentReceivers(options.maxConcurrentReceivers)
+    }
 
     if (options.s3Bucket) {
       var s3 = new AWS.S3(options)
