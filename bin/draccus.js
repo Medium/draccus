@@ -51,7 +51,7 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
 
     if (options.s3Bucket) {
       var s3 = new AWS.S3(options)
-      new S3Store(sink, s3, options.filenamePattern, options.s3Bucket, options.flushFrequency)
+      new S3Store(sink, s3, options.filenamePattern, options.s3Bucket, options.flushFrequency, options.udp_port, options.udp_host)
           .verifyBucket(function (err, writable) {
             if (!writable) exit(1, 'S3 Bucket "' + options.s3Bucket + '" not writable, ' + err.statusCode + ' ' + err.name)
             else sink.startReceiving()
@@ -59,7 +59,7 @@ sqs.getQueueUrl({'QueueName': options.queueName}, function (err, data) {
 
     } else if (options.outDir) {
       var outDir = path.resolve(process.cwd(), options.outDir)
-      new MessageStore(sink, outDir, options.filenamePattern, options.flushFrequency)
+      new MessageStore(sink, outDir, options.filenamePattern, options.flushFrequency, options.udp_port, options.udp_host)
       sink.startReceiving()
 
     } else if (options.stdout) {
