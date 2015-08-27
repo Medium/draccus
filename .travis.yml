@@ -1,4 +1,10 @@
+# Enables support for a docker container-based build
+# which should provide faster startup times and beefier
+# "machines".
+# See: http://docs.travis-ci.com/user/workers/container-based-infrastructure/
+sudo: false
+
 language: node_js
 node_js:
+  - "0.12"
   - "0.10"
-  - "0.8"

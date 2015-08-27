@@ -48,8 +48,10 @@
     "aws-sdk": "1.18.0",
     "flags": "0.1.1",
     "logg": "0.3.0",
-    "moment": "2.5.1",
-    "nodeunit": "0.8.6"
+    "moment": "2.5.1"
   },
-  "main": "lib/draccus.js"
+  "main": "lib/draccus.js",
+  "devDependencies": {
+    "nodeunit": "0.8.6"
+  }
 }
